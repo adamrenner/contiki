@@ -32,10 +32,11 @@
 
 /**
  * \file
- *         Leds arch specific file for the WiSMote platform
+ *         Leds arch specific file for the Proflex platform
  * \author
  *         Niclas Finne <nfi@sics.se>
  *         Joakim Eriksson <joakime@sics.se>
+ *         Adam Renner - proflex modifications
  */
 
 #include "contiki.h"
