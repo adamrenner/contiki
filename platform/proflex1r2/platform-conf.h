@@ -57,7 +57,7 @@
 
 #define HAVE_STDINT_H
 #include "msp430def.h"
-#include "dev/cc2520/cc2520.h"
+//#include "dev/cc2520/cc2520.h"
 
 
 /* Types for clocks and uip_stats */
@@ -118,16 +118,16 @@ typedef unsigned long off_t;
 #define CC2520_FIFO_PORT(type)     P1##type
 #define CC2520_FIFO_PIN            5
 
-
+/*set CCA and SFD Pins to VREG to make compiler happy*/
 /* P1.7 - Input: CCA from CC2520 */
-//#define CC2520_CCA_PORT(type)      P1##type
-//#define CC2520_CCA_PIN             7
+#define CC2520_CCA_PORT(type)      P1##type
+#define CC2520_CCA_PIN             7
 /* P2.0 - Input:  SFD from CC2520 */
 /*SFP will be disabled for proflex since we are short GPIOs
 We must ensure that SFP time sync remains disabled in contiki-conf.h
 */
-//#define CC2520_SFD_PORT(type)      P2##type
-//#define CC2520_SFD_PIN             0
+#define CC2520_SFD_PORT(type)      P1##type
+#define CC2520_SFD_PIN             7
 
 
 /* P3.0 - Output: SPI Chip Select (CS_N) */
