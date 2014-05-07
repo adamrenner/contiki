@@ -57,6 +57,7 @@
 
 #define HAVE_STDINT_H
 #include "msp430def.h"
+#include "dev/cc2520/cc2520.h"
 
 
 /* Types for clocks and uip_stats */
@@ -99,36 +100,10 @@ typedef unsigned long off_t;
 #define SPI_WAITFOREORx() while ((UCB0IFG & UCRXIFG) == 0)
                                 /* USART0 Tx buffer ready? */
 #define SPI_WAITFORTxREADY() while ((UCB0IFG & UCTXIFG) == 0)
-/*                                 /\* USART0 Tx ready? *\/ */
-/* #define SPI_WAITFOREOTx() while (!(UCB0IFG & UCRXIFG)) */
-/*                                 /\* USART0 Rx ready? *\/ */
-/* #define SPI_WAITFOREORx() while (!(UCB0IFG & UCRXIFG)) */
-/*                                 /\* USART0 Tx buffer ready? *\/ */
-/* #define SPI_WAITFORTxREADY() while (!(UCB0IFG & UCRXIFG)) */
-/* #define SPI_BUSY_WAIT() 		while ((UCB0STAT & UCBUSY) == 1) */
 
 #define MOSI           1  /* P3.1 - Output: SPI Master out - slave in (MOSI) */
 #define MISO           2  /* P3.2 - Input:  SPI Master in - slave out (MISO) */
 #define SCK            3  /* P3.3 - Output: SPI Serial Clock (SCLK) */
-/* #define SCK            1  /\* P3.1 - Output: SPI Serial Clock (SCLK) *\/ */
-/* #define MOSI           2  /\* P3.2 - Output: SPI Master out - slave in (MOSI) *\/ */
-/* #define MISO           3  /\* P3.3 - Input:  SPI Master in - slave out (MISO) *\/ */
-
-/*
- * SPI bus - M25P80 external flash configuration.
- */
-
-#define FLASH_PWR       //3       /* P4.3 Output */
-#define FLASH_CS        //4       /* P4.4 Output */
-#define FLASH_HOLD      //7       /* P4.7 Output */
-
-/* Enable/disable flash access to the SPI bus (active low). */
-
-#define SPI_FLASH_ENABLE()  //( P4OUT &= ~BV(FLASH_CS) )
-#define SPI_FLASH_DISABLE() //( P4OUT |=  BV(FLASH_CS) )
-
-#define SPI_FLASH_HOLD()               // ( P4OUT &= ~BV(FLASH_HOLD) )
-#define SPI_FLASH_UNHOLD()              //( P4OUT |=  BV(FLASH_HOLD) )
 
 /*
  * SPI bus - CC2520 pin configuration.
@@ -142,29 +117,48 @@ typedef unsigned long off_t;
 /* P1.5 - Input: FIFO from CC2520 */
 #define CC2520_FIFO_PORT(type)     P1##type
 #define CC2520_FIFO_PIN            5
+
+
 /* P1.7 - Input: CCA from CC2520 */
-#define CC2520_CCA_PORT(type)      P1##type
-#define CC2520_CCA_PIN             7
+//#define CC2520_CCA_PORT(type)      P1##type
+//#define CC2520_CCA_PIN             7
 /* P2.0 - Input:  SFD from CC2520 */
-#define CC2520_SFD_PORT(type)      P2##type
-#define CC2520_SFD_PIN             0
+/*SFP will be disabled for proflex since we are short GPIOs
+We must ensure that SFP time sync remains disabled in contiki-conf.h
+*/
+//#define CC2520_SFD_PORT(type)      P2##type
+//#define CC2520_SFD_PIN             0
+
+
 /* P3.0 - Output: SPI Chip Select (CS_N) */
 #define CC2520_CSN_PORT(type)      P3##type
 #define CC2520_CSN_PIN             0
 /* P4.3 - Output: VREG_EN to CC2520 */
-#define CC2520_VREG_PORT(type)     P4##type
-#define CC2520_VREG_PIN            3
+#define CC2520_VREG_PORT(type)     P1##type
+#define CC2520_VREG_PIN            7
 /* P4.4 - Output: RESET_N to CC2520 */
-#define CC2520_RESET_PORT(type)    P4##type
-#define CC2520_RESET_PIN           4
+#define CC2520_RESET_PORT(type)    P7##type
+#define CC2520_RESET_PIN           6
 
+/*not sure about this, but it does not seem to be used anywhere*/
 #define CC2520_IRQ_VECTOR PORT1_VECTOR
 
 /* Pin status.CC2520 */
 #define CC2520_FIFOP_IS_1 (!!(CC2520_FIFOP_PORT(IN) & BV(CC2520_FIFOP_PIN)))
 #define CC2520_FIFO_IS_1  (!!(CC2520_FIFO_PORT(IN) & BV(CC2520_FIFO_PIN)))
-#define CC2520_CCA_IS_1   (!!(CC2520_CCA_PORT(IN) & BV(CC2520_CCA_PIN)))
-#define CC2520_SFD_IS_1   (!!(CC2520_SFD_PORT(IN) & BV(CC2520_SFD_PIN)))
+/*check that the CCA is 1, the driver verifies that RSSI is valid first, so
+do not need that here*/
+#define CC2520_CCA_IS_1    ({  \
+  uint8_t reg;  \
+  CC2520_READ_REG(CC2520_FSMSTAT1, reg);  \
+  (!!(reg & BV(4)));  \
+})
+
+#define CC2520_SFD_IS_1   ({  \
+  uint8_t reg;  \
+  CC2520_READ_REG(CC2520_FSMSTAT1, reg);  \
+  (!!(reg & BV(5)));  \
+})
 
 /* The CC2520 reset pin. */
 #define SET_RESET_INACTIVE()   (CC2520_RESET_PORT(OUT) |=  BV(CC2520_RESET_PIN))

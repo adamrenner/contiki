@@ -683,8 +683,9 @@ cc2520_read(void *buf, unsigned short bufsize)
     len = FOOTER_LEN;
   }
 
-  if(CC2520_FIFOP_IS_1) {
-    if(!CC2520_FIFO_IS_1) {
+  if(CC2520_FIFOP_IS_1) {//high if full frame or fifo overflow
+    /*RX overflow detection*/
+    if(!CC2520_FIFO_IS_1) {//high if bytes are in fifo, low during rx fifo overflow
       /* Clean up in case of FIFO overflow!  This happens for every
        * full length frame and is signaled by FIFOP = 1 and FIFO =
        * 0. */

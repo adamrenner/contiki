@@ -45,7 +45,7 @@
 #include "dev/i2c.h"
 
 /*
- * On the Tmote sky access to I2C/SPI/UART0 must always be exclusive.
+ * The Proflex uses P3 for the SPI bus to run the cc2520. So we will not use this I2C
  */
 
 void     i2c_enable(void);

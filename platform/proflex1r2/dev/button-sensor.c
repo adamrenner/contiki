@@ -37,9 +37,12 @@ const struct sensors_sensor button_sensor;
 
 static struct timer debouncetimer;
 static int status(int type);
+/*unfortunately interrupts are only on P1 and P2, so
+buttons should be disabled on the proflex dev board
+although it could be jumpered over to P1 or P2.
 
-HWCONF_PIN(BUTTON, 2, 7);
-HWCONF_IRQ(BUTTON, 2, 7);
+HWCONF_PIN(BUTTON, 4, 3);//user_int_1 P4.3
+HWCONF_IRQ(BUTTON, 4, 3);
 
 /*---------------------------------------------------------------------------*/
 ISR(PORT2, irq_p2)
