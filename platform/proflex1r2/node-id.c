@@ -39,7 +39,6 @@
 
 #include "sys/node-id.h"
 #include "contiki-conf.h"
-#include "dev/xmem.h"
 
 unsigned short node_id = 0;
 
@@ -47,25 +46,12 @@ unsigned short node_id = 0;
 void
 node_id_restore(void)
 {
-  /* unsigned char buf[4]; */
-  /* xmem_pread(buf, 4, NODE_ID_XMEM_OFFSET); */
-  /* if(buf[0] == 0xad && */
-  /*    buf[1] == 0xde) { */
-  /*   node_id = (buf[2] << 8) | buf[3]; */
-  /* } else { */
+
     node_id = 0;
-  /* } */
 }
 /*---------------------------------------------------------------------------*/
 void
 node_id_burn(unsigned short id)
 {
-  /* unsigned char buf[4]; */
-  /* buf[0] = 0xad; */
-  /* buf[1] = 0xde; */
-  /* buf[2] = id >> 8; */
-  /* buf[3] = id & 0xff; */
-  //xmem_erase(XMEM_ERASE_UNIT_SIZE, NODE_ID_XMEM_OFFSET);
-  //xmem_pwrite(buf, 4, NODE_ID_XMEM_OFFSET);
 }
 /*---------------------------------------------------------------------------*/
