@@ -117,30 +117,25 @@ typedef unsigned long off_t;
 /* P1.5 - Input: FIFO from CC2520 */
 #define CC2520_FIFO_PORT(type)     P1##type
 #define CC2520_FIFO_PIN            5
+/* P8.7 - Input: CCA from CC2520 */   //dumb port
+/*#define CC2520_CCA_PORT(type)  */   //P8##type
+/*#define CC2520_CCA_PIN         */   //7
 
-/*set CCA and SFD Pins to VREG to make compiler happy*/
-/* P1.7 - Input: CCA from CC2520 */
-#define CC2520_CCA_PORT(type)      P1##type
-#define CC2520_CCA_PIN             7
-/* P2.0 - Input:  SFD from CC2520 */
-/*SFP will be disabled for proflex since we are short GPIOs
-We must ensure that SFP time sync remains disabled in contiki-conf.h
-*/
+/* P1.4 - Input:  SFD from CC2520 */
 #define CC2520_SFD_PORT(type)      P1##type
-#define CC2520_SFD_PIN             7
-
+#define CC2520_SFD_PIN             4
 
 /* P3.0 - Output: SPI Chip Select (CS_N) */
 #define CC2520_CSN_PORT(type)      P3##type
-#define CC2520_CSN_PIN             0
-/* P4.3 - Output: VREG_EN to CC2520 */
+#define CC2520_CSN_PIN             0 
+
+/* P1.7 - Output: VREG_EN to CC2520 */
 #define CC2520_VREG_PORT(type)     P1##type
 #define CC2520_VREG_PIN            7
-/* P4.4 - Output: RESET_N to CC2520 */
+/* P7.6 - Output: RESET_N to CC2520 */
 #define CC2520_RESET_PORT(type)    P7##type
 #define CC2520_RESET_PIN           6
 
-/*not sure about this, but it does not seem to be used anywhere*/
 #define CC2520_IRQ_VECTOR PORT1_VECTOR
 
 /* Pin status.CC2520 */
@@ -148,17 +143,17 @@ We must ensure that SFP time sync remains disabled in contiki-conf.h
 #define CC2520_FIFO_IS_1  (!!(CC2520_FIFO_PORT(IN) & BV(CC2520_FIFO_PIN)))
 /*check that the CCA is 1, the driver verifies that RSSI is valid first, so
 do not need that here*/
-#define CC2520_CCA_IS_1    ({  \
-  uint8_t reg;  \
-  CC2520_READ_REG(CC2520_FSMSTAT1, reg);  \
-  (!!(reg & BV(4)));  \
-})
+#define CC2520_CCA_IS_1   (getreg(CC2520_FSMSTAT1) & BIT4)
+#define CC2520_SFD_IS_1   (!!(CC2520_SFD_PORT(IN) & BV(CC2520_SFD_PIN)))
+/*#define CC2520_SFD_IS_1   (getreg(CC2520_FSMSTAT1) & BIT5)*/
 
+/*
 #define CC2520_SFD_IS_1   ({  \
   uint8_t reg;  \
   CC2520_READ_REG(CC2520_FSMSTAT1, reg);  \
   (!!(reg & BV(5)));  \
 })
+*/
 
 /* The CC2520 reset pin. */
 #define SET_RESET_INACTIVE()   (CC2520_RESET_PORT(OUT) |=  BV(CC2520_RESET_PIN))

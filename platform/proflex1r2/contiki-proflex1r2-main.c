@@ -274,13 +274,19 @@ main(int argc, char **argv)
 
     cc2520_set_pan_addr(IEEE802154_PANID, shortaddr, longaddr);
   }
-  cc2520_set_channel(RF_CHANNEL);
+  //cc2520_set_channel(RF_CHANNEL);
 
   printf(CONTIKI_VERSION_STRING " started. ");
   if(node_id > 0) {
     printf("Node id is set to %u.\n", node_id);
   } else {
     printf("Node id is not set.\n");
+  }
+  {
+    uint8_t fff = 0;
+    fff = cc2520_get_channel();
+    printf("\nCHANNEL CHECK %x %i\n",fff,fff);
+
   }
 
 #if WITH_UIP6

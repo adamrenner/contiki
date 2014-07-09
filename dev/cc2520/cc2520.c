@@ -218,10 +218,18 @@ static void RELEASE_LOCK(void) {
 }
 /*---------------------------------------------------------------------------*/
 static uint8_t
-getreg(uint16_t regname)
+getreg(uint8_t regname)
 {
   uint8_t reg;
   CC2520_READ_REG(regname, reg);
+  return reg;
+}
+/*---------------------------------------------------------------------------*/
+static uint8_t
+getsreg(uint8_t regname)
+{
+  uint8_t reg;
+  CC2520_READ_SREG(regname, reg);
   return reg;
 }
 /*---------------------------------------------------------------------------*/
@@ -270,31 +278,32 @@ cc2520_init(void)
 
   BUSYWAIT_UNTIL(status() & (BV(CC2520_XOSC16M_STABLE)), RTIMER_SECOND / 100);
 
+  /*When crystal oscillator stable we on current in active mode*/
+  cc2520_set_power_mode(POWER_MODE_ACTIVE);
+
   /* Change default values as recommended in the data sheet, */
   /* correlation threshold = 20, RX bandpass filter = 1.3uA.*/
 
   setreg(CC2520_TXCTRL,      0x94);
-  setreg(CC2520_TXPOWER,     0x13);    // Output power 1 dBm
+  setreg(CC2520_TXPOWER,     0x32);    // Output power 1 dBm
 
   /*
 
-	valeurs de TXPOWER
-	  0x03 -> -18 dBm
-	  0x2C -> -7 dBm
-	  0x88 -> -4 dBm
-	  0x81 -> -2 dBm
-	  0x32 -> 0 dBm
-	  0x13 -> 1 dBm
-	  0x32 -> 0 dBm
-	  0x13 -> 1 dBm
-	  0xAB -> 2 dBm
-	  0xF2 -> 3 dBm
-	  0xF7 -> 5 dBm
+  valeurs de TXPOWER
+    0x03 -> -18 dBm
+    0x2C -> -7 dBm
+    0x88 -> -4 dBm
+    0x81 -> -2 dBm
+    0x32 -> 0 dBm
+    0x13 -> 1 dBm
+    0xAB -> 2 dBm
+    0xF2 -> 3 dBm
+    0xF7 -> 5 dBm
   */
   setreg(CC2520_CCACTRL0,    0xF8);  // CCA treshold -80dBm
 
   // Recommended RX settings
-  setreg(CC2520_MDMCTRL0,    0x84);  // Controls modem
+  setreg(CC2520_MDMCTRL0,    0x85);  // Controls modem
   setreg(CC2520_MDMCTRL1,    0x14);  // Controls modem
   setreg(CC2520_RXCTRL,      0x3F);  // Adjust currents in RX related analog modules
   setreg(CC2520_FSCTRL,      0x5A);  // Adjust currents in synthesizer.
@@ -324,6 +333,37 @@ cc2520_init(void)
   setreg(CC2520_FRMCTRL1,          1);
   /* Set FIFOP threshold to maximum .*/
   setreg(CC2520_FIFOPCTRL,   FIFOP_THR(0x7F));
+
+#ifdef CONTIKI_TARGET_MODFLEX
+  /*Set the GPIO0 as output the SFD value to MSP430F543xA*/
+  setreg(CC2520_GPIOCTRL0, GPIOCTRL_SFD);
+  /*In Proflex module the GPIO0 of cc2520(cc2520 data sheet p.11) is connect to PIN 21 (PORT1.4) (MSP430F543xA Table 3. Terminal Functions)*/
+  P1DIR &= ~BIT4;
+  P1SEL |=  BIT4;
+
+  /* Configure GPIO pin based on recommend value from application note
+   * "Using CC2591 Front End with CC2520" page 17 table Table 8.2
+   * about the TXPOWER using following recommend value when cc2520 is used
+   * within in cc2591. We need to adapted because the CC2520 control the
+   * CC2591 instead operate alone.
+   *
+   * TXPOWER Power [dBm] Current [mA]
+     0xF9    17          136
+     0xF0    16          121
+     0xA0    14          102
+     0x2C    11          78
+     0x03    -1          57
+     0x01    -8          55
+   * */
+  setreg(CC2520_GPIOCTRL5,     0x47);
+  setreg(CC2520_GPIOCTRL4,     0x46);
+  setreg(CC2520_GPIOCTRL3,     0x7F);
+  setreg(CC2520_GPIOPOLARITY,  0xF);
+  setreg(CC2520_TXPOWER,       0x03);
+  setreg(CC2520_TXCTRL,        0xC1);
+  setreg(CC2520_AGCCTRL1,      0x16);
+
+#endif
 
   cc2520_set_pan_addr(0xffff, 0x0000, NULL);
   cc2520_set_channel(26);
@@ -830,4 +870,54 @@ cc2520_set_cca_threshold(int value)
   setreg(CC2520_CCACTRL0, value & 0xff);
   RELEASE_LOCK();
 }
+/*---------------------------------------------------------------------------*/
+/*Get a power mode this function typically call from outside of cc2520.c file*/
+uint8_t cc2520_get_power_mode()
+{
+  return current_mode;
+}
+/*Set a power mode this function typically call from outside of cc2520.c file
+ *
+ * input:   Power_mode
+ * output:  1 if setting power is success, 0 otherwise
+ * */
+
+uint8_t cc2520_set_power_mode(uint8_t mode)
+{
+  uint8_t rc = 0;
+  if (current_mode != mode)
+  {
+    switch(mode)
+    {
+        case POWER_MODE_ACTIVE:
+          /* Turn on the crystal oscillator. */
+          strobe(CC2520_INS_SXOSCON);
+          clock_delay(125);
+          BUSYWAIT_UNTIL(status() & (BV(CC2520_XOSC16M_STABLE)), RTIMER_SECOND / 100);
+          current_mode = POWER_MODE_ACTIVE;
+          rc = 1;
+        break;
+
+
+        case POWER_MODE_LPM1:
+          /* Turn off the crystal oscillator. */
+          strobe(CC2520_INS_SXOSCOFF);
+          current_mode = POWER_MODE_LPM1;
+          rc = 1;
+        break;
+
+        /*Not support yet Note that GPIO5, which is configured as an input in LPM2, should be tied either to GND or
+        * VDD when entering LPM2. If GPIO5 (or any other input) is left floating, the current
+        * consumption in LPM2 will be unpredictable. refer to application node "Using CC2591 Front End with CC2520"
+        * */
+        case POWER_MODE_LPM2:
+        break;
+
+        default:
+        break;
+    }
+  }
+  return rc;
+}
+
 /*---------------------------------------------------------------------------*/

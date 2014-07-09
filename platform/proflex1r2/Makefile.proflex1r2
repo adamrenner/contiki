@@ -1,4 +1,4 @@
-CONTIKI_TARGET_SOURCEFILES += contiki-proflex1r2-platform.c radio-sensor.c
+CONTIKI_TARGET_SOURCEFILES += contiki-proflex1r2-platform.c radio-sensor.c button-sensor.c
 
 ARCH=spi.c i2c.c node-id.c sensors.c \
      cc2520.c cc2520-arch.c cc2520-arch-sfd.c \
@@ -9,7 +9,7 @@ ARCH=spi.c i2c.c node-id.c sensors.c \
 #technically neither should be needed unless putchar is used.
 #slip_uart0.c
 
-CFLAGS += -DCONTIKI_TARGET_WISMOTE
+CFLAGS += -DCONTIKI_TARGET_WISMOTE -DCONTIKI_TARGET_MODFLEX
 
 CONTIKI_TARGET_DIRS = . dev apps net
 ifndef CONTIKI_TARGET_MAIN

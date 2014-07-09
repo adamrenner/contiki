@@ -31,6 +31,18 @@
  * Author: Niclas Finne <nfi@sics.se>, Joakim Eriksson <joakime@sics.se>
  */
 
+#include "dev/button-sensor.h"
+
+//const struct sensors_sensor *sensors[] = {
+//   &button_1_sensor,
+//   &button_2_sensor
+//};
+
+//unsigned char sensors_flags[(sizeof(sensors) / sizeof(struct sensors_sensor *))];
+SENSORS(   &button_1_sensor, \
+           &button_2_sensor, \
+           &button_3_sensor);
+//SENSORS(   &button_2_sensor);
 
 
 void

@@ -46,6 +46,9 @@
 #include "dev/leds.h"
 
 #include <stdio.h>
+
+#include <stdio.h>
+#include <string.h>
 /*---------------------------------------------------------------------------*/
 PROCESS(example_abc_process, "ABC example");
 AUTOSTART_PROCESSES(&example_abc_process);
@@ -61,12 +64,38 @@ static struct abc_conn abc;
 PROCESS_THREAD(example_abc_process, ev, data)
 {
   static struct etimer et;
+  //static uint8_t fff = 0;
 
   PROCESS_EXITHANDLER(abc_close(&abc);)
 
   PROCESS_BEGIN();
+  //cc2520_set_channel(17 & 0x7f);
+{
+    uint8_t longaddr[8];
+    uint16_t shortaddr;
+
+    shortaddr = (linkaddr_node_addr.u8[0] << 8) +
+      linkaddr_node_addr.u8[1];
+    memset(longaddr, 0, sizeof(longaddr));
+    linkaddr_copy((linkaddr_t *)&longaddr, &linkaddr_node_addr);
+
+    printf("MAC %02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x\n\n ",
+           longaddr[0], longaddr[1], longaddr[2], longaddr[3],
+           longaddr[4], longaddr[5], longaddr[6], longaddr[7]);
+
+    //cc2520_set_pan_addr(0xAACB, shortaddr, longaddr);
+  }
 
   abc_open(&abc, 128, &abc_call);
+  printf("starting\n");
+//  {
+//    uint8_t fff = 0;
+//    uint8_t eee = 0x49;
+//    cc2520_set_txpower(eee & 0xff);
+//    fff = cc2520_get_txpower();
+//    printf("\nPOWER CHECK %x\n",fff);
+//
+//  }
 
   while(1) {
 
@@ -76,8 +105,21 @@ PROCESS_THREAD(example_abc_process, ev, data)
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
 
     packetbuf_copyfrom("Hello", 6);
+//    if (CC2520_CCA_IS_1)
+//    {
+//      printf("CCA\n");
+//    }
     abc_send(&abc);
-    printf("abc message sent\n");
+//    {
+//    uint8_t fff = 0;
+//    fff = cc2520_get_txpower();
+//    printf("\nPOWER CHECK %x\n",fff);
+//    fff = cc2520_get_channel();
+//    printf("CHANNEL CHECK %x %i\n",fff,fff);
+//
+//
+//  }
+    printf("abc message sent \n");
   }
 
   PROCESS_END();
